@@ -8,36 +8,13 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 
 import "hardhat/console.sol";
+import "./SageBossContract.sol";
+import "./SageCharacterContract.sol";
 
-contract SageGame is ERC721 {
-
-    struct SageAttributes {
-        // TODO adjust uint values/add more
-        uint hp;
-        uint maxHp;
-        uint attackDamage;
-        uint sageIndex;
-
-        string name;
-        string imageURI;
-    }
-
-    struct SageBoss {
-        string name;
-        string imageURI;
-        uint hp;
-        uint maxHp;
-        uint attackDamage;
-    }
+contract SageGame is ERC721, SageCharacterContract, SageBossContract {
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
-
-    SageAttributes[] defaultSages;
-    SageBoss public activeSageBoss;
-
-    mapping (uint => SageAttributes) public sageIdToAttributes;
-    mapping (address => uint) public sageOwnerToId;
 
     event SageNFTMinted(address sender, uint tokenId, uint sageIndex);
     event AttackComplete(uint newBossHp, uint newPlayerHp);
@@ -45,21 +22,9 @@ contract SageGame is ERC721 {
     constructor(string[] memory sageNames,
                 string[] memory sageImageURIs,
                 uint16[] memory sageHp,
-                uint16[] memory sageAttackDamage) ERC721("--Test Sages--", "TSTSAGE") {
-        // Initialize each of the sages
-        for (uint i = 0; i < sageNames.length; i += 1) {
-            defaultSages.push(SageAttributes({
-                hp:           sageHp[i],
-                maxHp:        sageHp[i],
-                attackDamage: sageAttackDamage[i],
-                sageIndex:    i,
-                name:         sageNames[i],
-                imageURI:     sageImageURIs[i]
-            }));
-
-            SageAttributes memory sage = defaultSages[i];
-            console.log("Finished initializing %s w/ HP %s, img %s", sage.name, sage.hp, sage.imageURI);
-        }
+                uint16[] memory sageAttackDamage)
+            ERC721("--Test Sages--", "TSTSAGE")
+            SageCharacterContract(sageNames, sageImageURIs, sageHp, sageAttackDamage) {
         // Have our tokens actually start at 1
         _tokenIds.increment();
     }
@@ -69,12 +34,12 @@ contract SageGame is ERC721 {
         _safeMint(msg.sender, newSageId);
 
         sageIdToAttributes[newSageId] = SageAttributes({
-                hp:           defaultSages[_sageIndex].hp,
-                maxHp:        defaultSages[_sageIndex].maxHp,
-                attackDamage: defaultSages[_sageIndex].attackDamage,
+                hp:           playableSages[_sageIndex].hp,
+                maxHp:        playableSages[_sageIndex].maxHp,
+                attackDamage: playableSages[_sageIndex].attackDamage,
                 sageIndex:    _sageIndex,
-                name:         defaultSages[_sageIndex].name,
-                imageURI:     defaultSages[_sageIndex].imageURI
+                name:         playableSages[_sageIndex].name,
+                imageURI:     playableSages[_sageIndex].imageURI
         });
 
         console.log("Minted Sage NFT w/ tokenId %s and sageIndex %s", newSageId, _sageIndex);
@@ -107,20 +72,6 @@ contract SageGame is ERC721 {
 
         string memory output = string(abi.encodePacked("data:application/json;base64,", json));
         return output;
-    }
-
-    function spawnBoss(string memory bossName,
-                       string memory bossImageURI,
-                       uint bossHp,
-                       uint bossAttackDamage) public {
-        activeSageBoss = SageBoss({
-            name: bossName,
-            imageURI: bossImageURI,
-            hp: bossHp,
-            maxHp: bossHp,
-            attackDamage: bossAttackDamage
-        });
-        console.log("Done initializing boss %s w/ HP %s, img %s", activeSageBoss.name, activeSageBoss.hp, activeSageBoss.imageURI);
     }
 
     function attackBoss() public {
@@ -163,13 +114,5 @@ contract SageGame is ERC721 {
             SageAttributes memory emptySage;
             return emptySage;
         }
-    }
-
-    function getAllDefaultSages() public view returns (SageAttributes[] memory) {
-        return defaultSages;
-    }
-
-    function getActiveSageBoss() public view returns (SageBoss memory) {
-        return activeSageBoss;
     }
 }
