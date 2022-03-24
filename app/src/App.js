@@ -7,6 +7,8 @@ import SelectCharacter from './Components/SelectCharacter';
 import { CONTRACT_ADDRESS } from "./utils/constants";
 import { transformCharacterData } from "./utils/helpers";
 import sageGame from './utils/SageGame.json';
+import Arena from './Components/Arena';
+import LoadingIndicator from "./Components/LoadingIndicator";
 
 // Constants
 const TWITTER_HANDLE = 'bgsamz';
@@ -15,12 +17,14 @@ const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState(null);
   const [characterNFT, setCharacterNFT] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const checkIfWalletIsConnected = async () => {
     try {
       const { ethereum } = window;
       if (!ethereum) {
         console.log("Make sure you have MetaMask installed!");
+        setIsLoading(false);
         return;
       } else {
         console.log("Ethereum object found.");
@@ -37,6 +41,7 @@ const App = () => {
     } catch (error) {
       console.log(error);
     }
+    setIsLoading(false);
   };
 
   const checkNetwork = async () => {
@@ -67,6 +72,10 @@ const App = () => {
   };
 
   const renderContent = () => {
+    if (isLoading) {
+      return <LoadingIndicator />;
+    }
+
     if (!currentAccount) {
       return (
         <div className="connect-wallet-container">
@@ -81,10 +90,13 @@ const App = () => {
       );
     } else if (currentAccount && !characterNFT) {
       return <SelectCharacter setCharacterNFT={setCharacterNFT} />
+    } else if (currentAccount && characterNFT) {
+      return <Arena characterNFT={characterNFT} setCharacterNFT={setCharacterNFT} />
     }
   };
 
   useEffect(() => {
+    setIsLoading(true);
     checkIfWalletIsConnected();
     checkNetwork();
   }, []);
@@ -109,6 +121,8 @@ const App = () => {
       } else {
         console.log('No Sage NFT found');
       }
+
+      setIsLoading(false);
     }
 
     if (currentAccount) {
