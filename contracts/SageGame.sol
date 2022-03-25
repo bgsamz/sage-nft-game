@@ -9,27 +9,29 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 
 import "hardhat/console.sol";
 import "./SageBossContract.sol";
-import "./SageCharacterContract.sol";
 
-contract SageGame is ERC721, SageCharacterContract, SageBossContract {
+contract SageGame is ERC721, SageBossContract {
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
     event SageNFTMinted(address sender, uint tokenId, uint sageIndex);
-    event AttackComplete(uint newBossHp, uint newPlayerHp);
 
     constructor(string[] memory sageNames,
                 string[] memory sageImageURIs,
-                uint16[] memory sageHp,
-                uint16[] memory sageAttackDamage)
-            ERC721("--Test Sages--", "TSTSAGE")
-            SageCharacterContract(sageNames, sageImageURIs, sageHp, sageAttackDamage) {
+                uint[] memory sageHp,
+                uint[] memory sageAttackDamage)
+            ERC721("--Test Sages--", "TSTSAGE") {
+        // Initialize all the sages
+        for (uint i = 0; i < sageNames.length; i += 1) {
+            addPlayableSage(sageNames[i], sageImageURIs[i], sageHp[i], sageAttackDamage[i]);
+        }
+
         // Have our tokens actually start at 1
         _tokenIds.increment();
     }
 
-    function mintSageNft(uint _sageIndex) external {
+    function mintSageNft(uint _sageIndex) public {
         uint newSageId = _tokenIds.current();
         _safeMint(msg.sender, newSageId);
 
@@ -38,13 +40,15 @@ contract SageGame is ERC721, SageCharacterContract, SageBossContract {
                 maxHp:        playableSages[_sageIndex].maxHp,
                 attackDamage: playableSages[_sageIndex].attackDamage,
                 sageIndex:    _sageIndex,
+                tokenId:      newSageId,
                 name:         playableSages[_sageIndex].name,
                 imageURI:     playableSages[_sageIndex].imageURI
         });
 
         console.log("Minted Sage NFT w/ tokenId %s and sageIndex %s", newSageId, _sageIndex);
 
-        sageOwnerToId[msg.sender] = newSageId;
+        sageIdToOwner[newSageId] = msg.sender;
+        sageOwnerToId[msg.sender].push(newSageId);
         _tokenIds.increment();
 
         emit SageNFTMinted(msg.sender, newSageId, _sageIndex);
@@ -74,45 +78,19 @@ contract SageGame is ERC721, SageCharacterContract, SageBossContract {
         return output;
     }
 
-    function attackBoss() public {
-        uint tokenIdOfAttacker = sageOwnerToId[msg.sender];
-        SageAttributes storage attacker = sageIdToAttributes[tokenIdOfAttacker];
-
-        console.log("\nPlayer w/ character %s about to attack. Has %s HP and %s AD", attacker.name, attacker.hp, attacker.attackDamage);
-        console.log("Boss %s has %s HP and %s AD", activeSageBoss.name, activeSageBoss.hp, activeSageBoss.attackDamage);
-
-        require(attacker.hp > 0, "Attacker must have HP to attack!");
-        require(activeSageBoss.hp > 0, "Active boss must have HP to be attacked!");
-
-        // Player attacks first
-        if (activeSageBoss.hp < attacker.attackDamage) {
-            activeSageBoss.hp = 0;
-        } else {
-            activeSageBoss.hp = activeSageBoss.hp - attacker.attackDamage;
+    function attackBoss(uint tokenId) public override {
+        super.attackBoss(tokenId);
+        if (activeSageBoss.hp == 0) {
+            mintSageNft(playableSages.length - 1);
         }
-
-        // Then boss attacks
-        if (attacker.hp < activeSageBoss.attackDamage) {
-            attacker.hp = 0;
-        } else {
-            attacker.hp = attacker.hp - activeSageBoss.attackDamage;
-        }
-
-        console.log("Player attacked boss. New boss hp: %s", activeSageBoss.hp);
-        console.log("Boss attacked player. New player hp: %s\n", attacker.hp);
-
-        emit AttackComplete(activeSageBoss.hp, attacker.hp);
     }
 
-    function checkIfUserHasNFT() public view returns (SageAttributes memory) {
-        uint sageTokenForUser = sageOwnerToId[msg.sender];
-
-        // Array will default to 0, so since we start tokens at 1, we can just check greater than 0
-        if (sageTokenForUser > 0) {
-            return sageIdToAttributes[sageTokenForUser];
-        } else {
-            SageAttributes memory emptySage;
-            return emptySage;
+    function getOwnedSageNFTs() public view returns (SageAttributes[] memory) {
+        uint[] memory ownedSageIDs = sageOwnerToId[msg.sender];
+        SageAttributes[] memory ownedSages = new SageAttributes[](ownedSageIDs.length);
+        for (uint i = 0; i < ownedSageIDs.length; i += 1) {
+            ownedSages[i] = sageIdToAttributes[ownedSageIDs[i]];
         }
+        return ownedSages;
     }
 }

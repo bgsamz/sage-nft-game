@@ -17,21 +17,34 @@ const main = async () => {
     txn = await gameContract.spawnBoss("Stretchy Sage",
                                        "https://i.imgur.com/vAZVX3b.jpg",
                                        1000,
-                                       15);
+                                       1);
     await txn.wait();
 
-    txn = await gameContract.mintSageNft(1);
+    txn = await gameContract.getOwnedSageNFTs();
+    console.log("Owned Sage NFTs:", txn);
+
+    txn = await gameContract.mintSageNft(0);
     await txn.wait();
+
+    txn = await gameContract.getOwnedSageNFTs();
+    console.log("Owned Sage NFTs:", txn);
 
     let returnedTokenUri = await gameContract.tokenURI(1);
     console.log("Token URI:", returnedTokenUri);
 
-    txn = await gameContract.attackBoss();
-    await txn.wait();
+    for (let i = 0; i < 10; i++) {
+        txn = await gameContract.attackBoss(1);
+        await txn.wait();
+    }
 
-    txn = await gameContract.attackBoss();
-    await txn.wait();
+    txn = await gameContract.getActiveSageBoss();
+    console.log("Active Sage Boss:", txn);
 
+    txn = await gameContract.getPlayableSages();
+    console.log("Playable Sages:", txn);
+
+    txn = await gameContract.getOwnedSageNFTs();
+    console.log("Owned Sage NFTs:", txn);
 };
 
 const runMain = async () => {
