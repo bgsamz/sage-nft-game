@@ -6,7 +6,7 @@ import sageGame from '../../utils/SageGame.json';
 import './SelectCharacter.css';
 import LoadingIndicator from "../LoadingIndicator";
 
-const SelectCharacter = ({ setCharacterNFT }) => {
+const SelectCharacter = ({ setCharacterNFTs }) => {
     const [characters, setCharacters] = useState([]);
     const [gameContract, setGameContract] = useState(null);
     const [mintingCharacter, setMintingCharacter] = useState(false);
@@ -73,9 +73,9 @@ const SelectCharacter = ({ setCharacterNFT }) => {
             console.log(`CharacterNFTMinted - sender: ${sender} tokenId: ${tokenId.toNumber()} characterIndex: ${characterIndex.toNumber()}`);
 
             if (gameContract) {
-                const characterNFT = await gameContract.checkIfUserHasNFT();
-                console.log('CharacterNFT: ', characterNFT);
-                setCharacterNFT(transformCharacterData(characterNFT));
+                const characterNFTs = await gameContract.getOwnedSageNFTs();
+                console.log('CharacterNFT: ', characterNFTs);
+                setCharacterNFTs(characterNFTs.map(transformCharacterData));
                 alert(`Sage NFT minted! See it here: https://testnets.opensea.io/assets/${CONTRACT_ADDRESS}/${tokenId.toNumber()}`);
             }
         };

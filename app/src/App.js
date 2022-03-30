@@ -16,7 +16,7 @@ const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState(null);
-  const [characterNFT, setCharacterNFT] = useState(null);
+  const [characterNFTs, setCharacterNFTs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const checkIfWalletIsConnected = async () => {
@@ -88,10 +88,18 @@ const App = () => {
           </button>
         </div>
       );
-    } else if (currentAccount && !characterNFT) {
-      return <SelectCharacter setCharacterNFT={setCharacterNFT} />
-    } else if (currentAccount && characterNFT) {
-      return <Arena characterNFT={characterNFT} setCharacterNFT={setCharacterNFT} />
+    // } else if (currentAccount && !characterNFT) {
+    //   return <SelectCharacter setCharacterNFT={setCharacterNFT} />
+    // } else if (currentAccount && characterNFT) {
+    //   return <Arena characterNFT={characterNFT} setCharacterNFT={setCharacterNFT} />
+    // }
+    } else {
+      return (
+          <div>
+            <Arena characterNFTs={characterNFTs} setCharacterNFTs={setCharacterNFTs} />
+            <SelectCharacter setCharacterNFTs={setCharacterNFTs} />
+          </div>
+      );
     }
   };
 
@@ -114,10 +122,10 @@ const App = () => {
         signer
       );
 
-      const txn = await gameContract.checkIfUserHasNFT();
-      if (txn.name) {
+      const txn = await gameContract.getOwnedSageNFTs();
+      if (txn.length > 0) {
         console.log('User has Sage NFT');
-        setCharacterNFT(transformCharacterData(txn));
+        setCharacterNFTs(txn.map(transformCharacterData));
       } else {
         console.log('No Sage NFT found');
       }

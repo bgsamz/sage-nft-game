@@ -6,25 +6,25 @@ import sageGame from '../../utils/SageGame.json';
 import LoadingIndicator from "../LoadingIndicator";
 import './Arena.css';
 
-const Arena = ({ characterNFT, setCharacterNFT }) => {
+const Arena = ({ characterNFTs, setCharacterNFTs }) => {
     const [gameContract, setGameContract] = useState(null);
     const [boss, setBoss] = useState(null);
     const [attackState, setAttackState] = useState('');
-    const [showToast, setShowToast] = useState(false);
+    const [toastState, setToastState] = useState({ showToast: false, attackDamage: null });
 
-    const attackBoss = async () => {
+    const attackBoss = async (attackingSage) => {
         try {
             if (gameContract) {
                 setAttackState("attacking");
                 console.log("Attacking boss!");
-                const attackTxn = await gameContract.attackBoss();
+                const attackTxn = await gameContract.attackBoss(attackingSage.tokenId);
                 await attackTxn.wait();
                 console.log("Attack txn:", attackTxn);
                 setAttackState("hit");
 
-                setShowToast(true);
+                setToastState({ showToast: true, attackDamage: attackingSage.attackDamage });
                 setTimeout(() => {
-                    setShowToast(false);
+                    setToastState({ showToast: false, attackDamage: null });
                 }, 5000);
             }
         } catch (error) {
@@ -58,18 +58,26 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
             setBoss(transformCharacterData(bossTxn));
         };
 
-        const onAttackComplete = async (newBossHp, newPlayerHp) => {
+        const onAttackComplete = async (newBossHp, playerTokenId, newPlayerHp) => {
             const bossHp = newBossHp.toNumber();
+            const tokenId = playerTokenId.toNumber();
             const playerHp = newPlayerHp.toNumber();
-            console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
+            console.log(`AttackComplete: Boss Hp: ${bossHp}  Player Token ID: ${tokenId} Player Hp: ${playerHp}`);
 
             setBoss((prevState) => {
                 return { ...prevState, hp: bossHp };
             });
 
-            setCharacterNFT((prevState) => {
-                return { ...prevState, hp: playerHp };
+            setCharacterNFTs((prevState) => {
+                return prevState.map((prevCharNft) => {
+                    return tokenId === prevCharNft.tokenId
+                        ? { ...prevCharNft, hp: playerHp}
+                        : prevCharNft;
+                });
             });
+            // setCharacterNFTs((prevState) => {
+            //     return { ...prevState, hp: playerHp };
+            // });
         };
 
         if (gameContract) {
@@ -86,9 +94,9 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
 
     return (
         <div className="arena-container">
-            {boss && characterNFT && (
-                <div id="toast" className={showToast ? 'show' : ''}>
-                    <div id="desc">{`🐾 ${boss.name} was hit for ${characterNFT.attackDamage}!`}</div>
+            {boss && characterNFTs.length > 0 && (
+                <div id="toast" className={toastState.showToast ? 'show' : ''}>
+                    <div id="desc">{`🐾 ${boss.name} was hit for ${toastState.attackDamage}!`}</div>
                 </div>
             )}
 
@@ -104,11 +112,6 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
                             </div>
                         </div>
                     </div>
-                    <div className="attack-container">
-                        <button className="cta-button" onClick={attackBoss}>
-                            {`🐾 Attack ${boss.name}`}
-                        </button>
-                    </div>
                     {attackState === "attacking" && (
                         <div className="loading-indicator">
                             <LoadingIndicator />
@@ -118,23 +121,34 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
                 </div>
             )}
 
-            {characterNFT && (
-                <div className="players-container">
-                    <div className="player-content">
-                        <h2>Your Sage</h2>
-                        <div className="player">
-                            <div className="image-content">
-                                <h2>{characterNFT.name}</h2>
-                                <img src={characterNFT.imageURI} alt={`Sage: ${characterNFT.name}`} />
-                                <div className="health-bar">
-                                    <progress value={characterNFT.hp} max={characterNFT.maxHp} />
-                                    <p>{`${characterNFT.hp} / ${characterNFT.maxHp}`}</p>
+            {characterNFTs.length > 0 && (
+                <div>
+                    <h2>Your Sages</h2>
+                    <div className="players-container">
+                        {characterNFTs.map(characterNFT => {
+                            return (
+                                <div className="player-content">
+                                    <div className="player" key={characterNFT.tokenId}>
+                                        <div className="image-content">
+                                            <h2>{characterNFT.name}</h2>
+                                            <img src={characterNFT.imageURI} alt={`Sage: ${characterNFT.name}`} />
+                                            <div className="health-bar">
+                                                <progress value={characterNFT.hp} max={characterNFT.maxHp} />
+                                                <p>{`${characterNFT.hp} / ${characterNFT.maxHp}`}</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4>{`🐾️ Attack Damage: ${characterNFT.attackDamage}`}</h4>
+                                            <div className="attack-container">
+                                                <button className="cta-button" onClick={() => attackBoss(characterNFT)}>
+                                                    {`🐾 Attack ${boss.name}`}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <h4>{`🐾️ Attack Damage: ${characterNFT.attackDamage}`}</h4>
-                            </div>
-                        </div>
+                            )
+                        })}
                     </div>
                 </div>
             )}

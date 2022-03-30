@@ -17,7 +17,7 @@ contract SageBossContract is SageCharacterContract {
 
     SageBoss public activeSageBoss;
 
-    event AttackComplete(uint newBossHp, uint newPlayerHp);
+    event AttackComplete(uint newBossHp, uint playerTokenId, uint newPlayerHp);
 
     function spawnBoss(string memory bossName,
                        string memory bossImageURI,
@@ -64,7 +64,7 @@ contract SageBossContract is SageCharacterContract {
         console.log("Player attacked boss. New boss hp: %s", activeSageBoss.hp);
         console.log("Boss attacked player. New player hp: %s\n", attacker.hp);
 
-        emit AttackComplete(activeSageBoss.hp, attacker.hp);
+        emit AttackComplete(activeSageBoss.hp, tokenId, attacker.hp);
     }
 
     function convertBossToPlayableSage() private {
