@@ -13,6 +13,7 @@ contract SageBossContract is SageCharacterContract {
         uint hp;
         uint maxHp;
         uint attackDamage;
+        uint price;
     }
 
     SageBoss public activeSageBoss;
@@ -22,13 +23,15 @@ contract SageBossContract is SageCharacterContract {
     function spawnBoss(string memory bossName,
                        string memory bossImageURI,
                        uint bossHp,
-                       uint bossAttackDamage) public {
+                       uint bossAttackDamage,
+                       uint price) public {
         activeSageBoss = SageBoss({
-            name: bossName,
-            imageURI: bossImageURI,
-            hp: bossHp,
-            maxHp: bossHp,
-            attackDamage: bossAttackDamage
+            name:         bossName,
+            imageURI:     bossImageURI,
+            hp:           bossHp,
+            maxHp:        bossHp,
+            attackDamage: bossAttackDamage,
+            price:        price
         });
         console.log("Done initializing boss %s w/ HP %s, img %s", activeSageBoss.name, activeSageBoss.hp, activeSageBoss.imageURI);
     }
@@ -71,7 +74,8 @@ contract SageBossContract is SageCharacterContract {
         addPlayableSage(activeSageBoss.name,
                         activeSageBoss.imageURI,
                         activeSageBoss.maxHp / 10,
-                        activeSageBoss.attackDamage * 2);
+                        activeSageBoss.attackDamage * 2,
+                        activeSageBoss.price);
     }
 
     function getActiveSageBoss() public view returns (SageBoss memory) {

@@ -2,9 +2,11 @@
 
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "hardhat/console.sol";
 
-contract SageCharacterContract {
+contract SageCharacterContract is Ownable {
 
     struct SageAttributes {
         // TODO adjust uint values/add more
@@ -13,6 +15,7 @@ contract SageCharacterContract {
         uint attackDamage;
         uint sageIndex;
         uint tokenId;
+        uint price;
         string name;
         string imageURI;
     }
@@ -26,7 +29,8 @@ contract SageCharacterContract {
     function addPlayableSage(string memory name,
                              string memory imageURI,
                              uint hp,
-                             uint attackDamage) internal {
+                             uint attackDamage,
+                             uint price) internal {
         uint newSageIndex = playableSages.length;
         playableSages.push(SageAttributes({
             hp:           hp,
@@ -34,12 +38,18 @@ contract SageCharacterContract {
             attackDamage: attackDamage,
             sageIndex:    newSageIndex,
             tokenId:      0,
+            price:        price,
             name:         name,
             imageURI:     imageURI
         }));
 
         SageAttributes memory newSage = playableSages[newSageIndex];
         console.log("Finished initializing %s w/ HP %s, img %s", newSage.name, newSage.hp, newSage.imageURI);
+    }
+
+    function updateSagePrice(uint sageIndex, uint newPrice) public onlyOwner {
+        require(sageIndex < playableSages.length, "Invalid Sage to update price");
+        playableSages[sageIndex].price = newPrice;
     }
 
     function getPlayableSages() public view returns (SageAttributes[] memory) {

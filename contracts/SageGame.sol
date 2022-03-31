@@ -20,18 +20,24 @@ contract SageGame is ERC721, SageBossContract {
     constructor(string[] memory sageNames,
                 string[] memory sageImageURIs,
                 uint[] memory sageHp,
-                uint[] memory sageAttackDamage)
+                uint[] memory sageAttackDamage,
+                uint[] memory prices)
             ERC721("--Test Sages--", "TSTSAGE") {
         // Initialize all the sages
         for (uint i = 0; i < sageNames.length; i += 1) {
-            addPlayableSage(sageNames[i], sageImageURIs[i], sageHp[i], sageAttackDamage[i]);
+            addPlayableSage(sageNames[i], sageImageURIs[i], sageHp[i], sageAttackDamage[i], prices[i]);
         }
 
         // Have our tokens actually start at 1
         _tokenIds.increment();
     }
 
-    function mintSageNft(uint _sageIndex) public {
+    function mintSageNft(uint _sageIndex) public payable {
+        require(msg.value >= playableSages[_sageIndex].price, "Did not pay enough to mint sage!");
+        _internalMintSageNft(_sageIndex);
+    }
+
+    function _internalMintSageNft(uint _sageIndex) public payable {
         uint newSageId = _tokenIds.current();
         _safeMint(msg.sender, newSageId);
 
@@ -41,6 +47,7 @@ contract SageGame is ERC721, SageBossContract {
                 attackDamage: playableSages[_sageIndex].attackDamage,
                 sageIndex:    _sageIndex,
                 tokenId:      newSageId,
+                price:        0,
                 name:         playableSages[_sageIndex].name,
                 imageURI:     playableSages[_sageIndex].imageURI
         });
@@ -81,7 +88,7 @@ contract SageGame is ERC721, SageBossContract {
     function attackBoss(uint tokenId) public override {
         super.attackBoss(tokenId);
         if (activeSageBoss.hp == 0) {
-            mintSageNft(playableSages.length - 1);
+            _internalMintSageNft(playableSages.length - 1);
         }
     }
 
@@ -92,5 +99,12 @@ contract SageGame is ERC721, SageBossContract {
             ownedSages[i] = sageIdToAttributes[ownedSageIDs[i]];
         }
         return ownedSages;
+    }
+
+    function withdraw() public onlyOwner {
+        uint amount = address(this).balance;
+
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "Failed to withdraw contract balance");
     }
 }
