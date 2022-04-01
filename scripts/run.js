@@ -2,6 +2,7 @@ const main = async () => {
     const [owner] = await hre.ethers.getSigners();
     const gameContractFactory = await hre.ethers.getContractFactory('SageGame');
     const pointOneEther = hre.ethers.utils.parseEther("0.1");
+    const healingPrice = hre.ethers.utils.parseEther("0.01");
     const gameContract = await gameContractFactory.deploy(
         ["Snowy Sage", "Armored Sage", "Sleepy Sage"], // Names
         [
@@ -11,7 +12,8 @@ const main = async () => {
         ],
         [75, 100, 25], // HP
         [100, 25, 25], // Attack
-        [pointOneEther, pointOneEther, pointOneEther]
+        [pointOneEther, pointOneEther, pointOneEther],
+        healingPrice
     );
     await gameContract.deployed();
     console.log("Contract deployed to:", gameContract.address);
@@ -65,6 +67,19 @@ const main = async () => {
     await gameContract.updateSagePrice(0, hre.ethers.utils.parseEther("420.0"));
     txn = await gameContract.getPlayableSages();
     console.log("Playable Sages:", txn);
+
+    await gameContract.healSage(1, { value: healingPrice });
+    txn = await gameContract.getOwnedSageNFTs();
+    console.log("Owned Sage NFTs:", txn);
+
+    await gameContract.setHealingPrice(pointOneEther);
+    // await gameContract.healSage(1, { value: healingPrice });
+    await gameContract.healSage(1, { value: pointOneEther });
+    txn = await gameContract.getOwnedSageNFTs();
+    console.log("Owned Sage NFTs:", txn);
+
+    balance = await hre.ethers.provider.getBalance(gameContract.address);
+    console.log("Contract Balance:", balance);
 };
 
 const runMain = async () => {

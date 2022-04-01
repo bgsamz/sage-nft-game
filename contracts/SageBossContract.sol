@@ -33,15 +33,15 @@ contract SageBossContract is SageCharacterContract {
             attackDamage: bossAttackDamage,
             price:        price
         });
-        console.log("Done initializing boss %s w/ HP %s, img %s", activeSageBoss.name, activeSageBoss.hp, activeSageBoss.imageURI);
+//        console.log("Done initializing boss %s w/ HP %s, img %s", activeSageBoss.name, activeSageBoss.hp, activeSageBoss.imageURI);
     }
 
     function attackBoss(uint tokenId) public virtual {
         require(sageIdToOwner[tokenId] == msg.sender, "Only Sage owner can initiate boss attack!");
         SageAttributes storage attacker = sageIdToAttributes[tokenId];
 
-        console.log("\nPlayer w/ character %s about to attack. Has %s HP and %s AD", attacker.name, attacker.hp, attacker.attackDamage);
-        console.log("Boss %s has %s HP and %s AD", activeSageBoss.name, activeSageBoss.hp, activeSageBoss.attackDamage);
+//        console.log("\nPlayer w/ character %s about to attack. Has %s HP and %s AD", attacker.name, attacker.hp, attacker.attackDamage);
+//        console.log("Boss %s has %s HP and %s AD", activeSageBoss.name, activeSageBoss.hp, activeSageBoss.attackDamage);
 
         require(attacker.hp > 0, "Attacker must have HP to attack!");
         require(activeSageBoss.hp > 0, "Active boss must have HP to be attacked!");
@@ -64,8 +64,8 @@ contract SageBossContract is SageCharacterContract {
             }
         }
 
-        console.log("Player attacked boss. New boss hp: %s", activeSageBoss.hp);
-        console.log("Boss attacked player. New player hp: %s\n", attacker.hp);
+//        console.log("Player attacked boss. New boss hp: %s", activeSageBoss.hp);
+//        console.log("Boss attacked player. New player hp: %s\n", attacker.hp);
 
         emit AttackComplete(activeSageBoss.hp, tokenId, attacker.hp);
     }

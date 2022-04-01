@@ -26,6 +26,8 @@ contract SageCharacterContract is Ownable {
     mapping (uint => address) public sageIdToOwner;
     mapping (address => uint[]) public sageOwnerToId;
 
+    uint public healingPrice;
+
     function addPlayableSage(string memory name,
                              string memory imageURI,
                              uint hp,
@@ -43,8 +45,8 @@ contract SageCharacterContract is Ownable {
             imageURI:     imageURI
         }));
 
-        SageAttributes memory newSage = playableSages[newSageIndex];
-        console.log("Finished initializing %s w/ HP %s, img %s", newSage.name, newSage.hp, newSage.imageURI);
+//        SageAttributes memory newSage = playableSages[newSageIndex];
+//        console.log("Finished initializing %s w/ HP %s, img %s", newSage.name, newSage.hp, newSage.imageURI);
     }
 
     function updateSagePrice(uint sageIndex, uint newPrice) public onlyOwner {
@@ -54,5 +56,18 @@ contract SageCharacterContract is Ownable {
 
     function getPlayableSages() public view returns (SageAttributes[] memory) {
         return playableSages;
+    }
+
+    function getHealingPrice() public view returns (uint) {
+        return healingPrice;
+    }
+
+    function setHealingPrice(uint newPrice) public onlyOwner {
+        healingPrice = newPrice;
+    }
+
+    function healSage(uint sageId) public payable {
+        require(msg.value >= healingPrice, "Did not pay enough to heal Sage!");
+        sageIdToAttributes[sageId].hp = sageIdToAttributes[sageId].maxHp;
     }
 }

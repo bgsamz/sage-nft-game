@@ -21,15 +21,17 @@ contract SageGame is ERC721, SageBossContract {
                 string[] memory sageImageURIs,
                 uint[] memory sageHp,
                 uint[] memory sageAttackDamage,
-                uint[] memory prices)
+                uint[] memory prices,
+                uint initialHealingPrice)
             ERC721("--Test Sages--", "TSTSAGE") {
         // Initialize all the sages
         for (uint i = 0; i < sageNames.length; i += 1) {
             addPlayableSage(sageNames[i], sageImageURIs[i], sageHp[i], sageAttackDamage[i], prices[i]);
         }
-
         // Have our tokens actually start at 1
         _tokenIds.increment();
+
+        healingPrice = initialHealingPrice;
     }
 
     function mintSageNft(uint _sageIndex) public payable {
@@ -52,7 +54,7 @@ contract SageGame is ERC721, SageBossContract {
                 imageURI:     playableSages[_sageIndex].imageURI
         });
 
-        console.log("Minted Sage NFT w/ tokenId %s and sageIndex %s", newSageId, _sageIndex);
+//        console.log("Minted Sage NFT w/ tokenId %s and sageIndex %s", newSageId, _sageIndex);
 
         sageIdToOwner[newSageId] = msg.sender;
         sageOwnerToId[msg.sender].push(newSageId);
