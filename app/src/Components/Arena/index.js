@@ -8,6 +8,7 @@ import './Arena.css';
 
 const Arena = ({ characterNFTs, setCharacterNFTs }) => {
     const [gameContract, setGameContract] = useState(null);
+    const [healPrice, setHealPrice] = useState(null);
     const [boss, setBoss] = useState(null);
     const [attackState, setAttackState] = useState('');
     const [toastState, setToastState] = useState({ showToast: false, attackDamage: null });
@@ -32,6 +33,19 @@ const Arena = ({ characterNFTs, setCharacterNFTs }) => {
             setAttackState('');
         }
     };
+
+    const healSage = async (sageId) => {
+        try {
+            if (gameContract) {
+                console.log("Healing Sage");
+                const healTxn = await gameContract.healSage(sageId, { value: healPrice });
+                await healTxn.wait();
+                console.log("Heal txn:", healTxn);
+            }
+        }   catch (error) {
+            console.log("Error healing Sage:", error);
+        }
+    }
 
     useEffect(() => {
         const { ethereum } = window;
@@ -58,6 +72,12 @@ const Arena = ({ characterNFTs, setCharacterNFTs }) => {
             setBoss(transformCharacterData(bossTxn));
         };
 
+        const getHealPrice = async () => {
+            const healingPrice = await gameContract.getHealingPrice();
+            console.log("Healing price:", healingPrice);
+            setHealPrice(healingPrice.toBigInt());
+        }
+
         const onAttackComplete = async (newBossHp, playerTokenId, newPlayerHp) => {
             const bossHp = newBossHp.toNumber();
             const tokenId = playerTokenId.toNumber();
@@ -82,6 +102,7 @@ const Arena = ({ characterNFTs, setCharacterNFTs }) => {
 
         if (gameContract) {
             fetchBoss();
+            getHealPrice();
             gameContract.on('AttackComplete', onAttackComplete);
         }
 
@@ -142,6 +163,9 @@ const Arena = ({ characterNFTs, setCharacterNFTs }) => {
                                             <div className="attack-container">
                                                 <button className="cta-button" onClick={() => attackBoss(characterNFT)}>
                                                     {`🐾 Attack ${boss.name}`}
+                                                </button>
+                                                <button className="cta-button" onClick={() => healSage(characterNFT.tokenId)}>
+                                                    {`🐾 Heal ${characterNFT.name} for ${ethers.utils.formatUnits(characterNFT.price, 'ether')} ether`}
                                                 </button>
                                             </div>
                                         </div>

@@ -6,6 +6,7 @@ const transformCharacterData = (characterData) => {
         maxHp: characterData.maxHp.toNumber(),
         attackDamage: characterData.attackDamage.toNumber(),
         tokenId: characterData.tokenId ? characterData.tokenId.toNumber() : null,
+        price: characterData.price ? characterData.price.toBigInt() : null,
     }
 };
 

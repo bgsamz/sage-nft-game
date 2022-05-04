@@ -11,12 +11,12 @@ const SelectCharacter = ({ setCharacterNFTs }) => {
     const [gameContract, setGameContract] = useState(null);
     const [mintingCharacter, setMintingCharacter] = useState(false);
 
-    const mintCharacterNFT = async (characterId) => {
+    const mintCharacterNFT = async (characterId, price) => {
         try {
             if (gameContract) {
                 setMintingCharacter(true);
                 console.log("Minting a new Sage!");
-                const mintTxn = await gameContract.mintSageNft(characterId);
+                const mintTxn = await gameContract.mintSageNft(characterId, { value: price });
                 await mintTxn.wait();
                 console.log("Minted new Sage:", mintTxn);
             }
@@ -35,8 +35,8 @@ const SelectCharacter = ({ setCharacterNFTs }) => {
             <button
                 type="button"
                 className="character-mint-button"
-                onClick={()=> mintCharacterNFT(idx)}
-            >{`Mint ${char.name}`}</button>
+                onClick={()=> mintCharacterNFT(idx, char.price)}
+            >{`Mint ${char.name} for ${ethers.utils.formatUnits(char.price, 'ether')} ether`}</button>
         </div>
     ));
 
